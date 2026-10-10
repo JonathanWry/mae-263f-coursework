@@ -1,0 +1,12 @@
+.DS_Store
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+
+# Generated when an assignment script is run.
+figures/
+homework_*/figures/
+
