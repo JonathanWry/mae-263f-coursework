@@ -247,10 +247,8 @@ def simulate(x0, u0, params, total_time, method="implicit"):
 
 
 def main():
-    """Run the simulations for Homework Questions 1--11."""
 
     def run_question(m, k, b, dt, total_time, method="implicit"):
-        """Run one homework case; the supplied lists contain nodes 1 through N."""
 
         # Prepend the fixed wall entry so every array follows [0, value_1, ..., value_N].
         m_full = np.r_[0.0, np.asarray(m, dtype=float)]
@@ -280,12 +278,9 @@ def main():
                 print(f"  {label} = {value:.9g} {units}")
 
     def oscillator_energy(x, u, equilibrium, mass, stiffness):
-        """Mechanical energy measured relative to the static equilibrium."""
 
         return 0.5 * mass * u**2 + 0.5 * stiffness * (x - equilibrium) ** 2
 
-    print("\nHomework simulation results")
-    print("=" * 72)
 
     # Part A: Free fall -----------------------------------------------------
     time_q1, x_q1, u_q1 = run_question(
