@@ -9,6 +9,8 @@ Structures and Soft Robots*.
   mass-spring-damper simulator using implicit and explicit Euler integration.
 - [`homework_2/`](homework_2/): implicit planar-beam simulator for a beam falling
   in viscous fluid and a point-loaded simply supported beam.
+- [`homework_3/`](homework_3/): three-dimensional Discrete Elastic Rod simulator
+  for straight and naturally curved clamped-free rods.
 
 Each assignment directory contains its own source code, run instructions, and
 optional validation utilities. Course handouts and lecture files are not
