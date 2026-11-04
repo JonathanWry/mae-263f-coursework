@@ -1,8 +1,9 @@
 # Homework 3 — Discrete Elastic Rods
 
 This folder solves the straight and naturally curved clamped-free rod cases in
-Homework 3. `Homework3.py` runs Questions 1–11 in order, prints general numerical
-data and convergence diagnostics, and does not choose multiple-choice answers.
+Homework 3. `Homework3.py` runs the computational questions, prints general
+numerical data and convergence diagnostics, and does not choose multiple-choice
+answers. Purely conceptual Questions 3 and 8 are not implemented in code.
 
 ## Run
 
@@ -14,7 +15,10 @@ python3 homework_3/Homework3.py
 ```
 
 The full parameter sweeps contain several three-dimensional nonlinear rod runs
-and can take several minutes. Plotting and per-step printing are disabled.
+and can take several minutes. Per-step plotting and printing are disabled. At
+the end, temporary figures show the Q4 mesh convergence, the Q10 twist-angle
+comparison, and the Q11 shape and end-distance evolution; the figures are not
+saved to disk.
 
 ## Files
 

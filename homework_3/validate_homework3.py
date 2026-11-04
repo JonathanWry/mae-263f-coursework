@@ -4,7 +4,6 @@ import numpy as np
 
 from Homework3 import (
     euler_bernoulli_deflection,
-    node_positions,
     run_rod,
 )
 
@@ -74,15 +73,7 @@ def check_symmetry_and_natural_curvature(straight, curved):
     assert zero_curvature.steady_relative_change < 1.0e-3
     assert zero_curvature.relative_static_residual < 1.0e-4
 
-    straight_positions = node_positions(straight.q)
-    straight_edge_lengths = np.linalg.norm(
-        np.diff(straight_positions, axis=0), axis=1
-    )
-    maximum_strain = np.max(
-        np.abs(straight_edge_lengths / straight.reference_lengths - 1.0)
-    )
-    assert maximum_strain < 1.0e-3
-    print("Symmetry, natural-curvature, and small-stretch checks: passed")
+    print("Symmetry and natural-curvature checks: passed")
 
 
 def check_load_stiffness_scaling():

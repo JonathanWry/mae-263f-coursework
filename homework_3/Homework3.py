@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -378,21 +379,35 @@ def main():
     print(f"  delta_DER [mm]                 {-1000.0 * small_load.tip_z[-1]:.9g}")
     print(f"  last-second relative change    {small_load.steady_relative_change:.6%}")
 
-    _question_header(3, "free length")
-    dl = 0.2 / (52 - 2)
-    print(f"  edge length [m]                {dl:.9g}")
-    print(f"  free edges                     {52 - 2}")
-    print(f"  free length [m]                {(52 - 2) * dl:.9g}")
-    print(f"  all-edge length [m]            {(52 - 1) * dl:.9g}")
-    print("  The first edge is fixed inside the clamp; free motion starts at node 1.")
-
     _question_header(4, "mesh convergence")
     print("  N      free edges      delta_DER [mm]      difference from EB")
-    for nv in (22, 42, 82):
+    mesh_nodes = np.array([22, 42, 82])
+    mesh_deflections = []
+    for nv in mesh_nodes:
         result = cached_run(nv=nv, gravity=0.05)
         delta = -result.tip_z[-1]
+        mesh_deflections.append(delta)
         difference = (delta - eb_small) / eb_small
         print(f"  {nv:2d}     {nv - 2:5d}          {1000.0 * delta:12.9g}      {difference:12.6%}")
+
+    figure4, axes4 = plt.subplots(figsize=(6.4, 3.8), constrained_layout=True)
+    axes4.plot(
+        mesh_nodes,
+        1000.0 * np.asarray(mesh_deflections),
+        "o-",
+        label="DER",
+    )
+    axes4.axhline(
+        1000.0 * eb_small,
+        color="#C54E3D",
+        linestyle="--",
+        label="Euler-Bernoulli",
+    )
+    axes4.set_xlabel("Number of nodes, N")
+    axes4.set_ylabel("Tip deflection [mm]")
+    axes4.set_title("Q4: mesh convergence")
+    axes4.set_xticks(mesh_nodes)
+    axes4.legend(frameon=False)
 
     _question_header(5, "stiffer rods under full gravity")
     print("  E [MPa]      delta_DER [m]      delta_EB [m]       e")
@@ -425,16 +440,6 @@ def main():
     print(f"  tip z [m]                      {default_straight.tip_z[-1]:.9g}")
     print(f"  last-second relative change    {default_straight.steady_relative_change:.6%}")
 
-    _question_header(8, "large-deformation diagnostics")
-    positions = node_positions(default_straight.q)
-    final_lengths = np.linalg.norm(np.diff(positions, axis=0), axis=1)
-    edge_strain = final_lengths / default_straight.reference_lengths - 1.0
-    delta_eb_default = euler_bernoulli_deflection(10.0e6, 9.81)
-    print(f"  delta_DER [m]                  {-default_straight.tip_z[-1]:.9g}")
-    print(f"  delta_EB [m]                   {delta_eb_default:.9g}")
-    print(f"  final tip x [m]                {positions[-1, 0]:.9g}")
-    print(f"  maximum |edge strain|          {np.max(np.abs(edge_strain)):.9g}")
-
     _question_header(9, "naturally curved rod")
     curved = cached_run(nv=50, natural_radius=0.02, gravity=9.81)
     print(f"  final tip z [m]                {curved.tip_z[-1]:.9g}")
@@ -445,6 +450,29 @@ def main():
     print(f"  curved max |theta| [rad]       {np.max(np.abs(curved.final_twist)):.9g}")
     print(f"  straight tip z [m]             {default_straight.tip_z[-1]:.9g}")
     print(f"  curved tip z [m]               {curved.tip_z[-1]:.9g}")
+
+    straight_edge_coordinate = np.linspace(
+        0.0, 1.0, default_straight.final_twist.size
+    )
+    curved_edge_coordinate = np.linspace(0.0, 1.0, curved.final_twist.size)
+    figure10, axes10 = plt.subplots(
+        figsize=(6.4, 3.8), constrained_layout=True
+    )
+    axes10.plot(
+        straight_edge_coordinate,
+        default_straight.final_twist,
+        label="Straight rod",
+    )
+    axes10.plot(
+        curved_edge_coordinate,
+        curved.final_twist,
+        label="Naturally curved rod",
+    )
+    axes10.axhline(0.0, color="0.7", linewidth=1.0, linestyle="--")
+    axes10.set_xlabel("Normalized edge coordinate")
+    axes10.set_ylabel(r"Twist angle, $\theta_k$ [rad]")
+    axes10.set_title("Q10: twist-angle comparison")
+    axes10.legend(frameon=False)
 
     _question_header(11, "curved initial shape with zero natural curvature")
     zero_curvature = cached_run(
@@ -457,6 +485,47 @@ def main():
     print(f"  final end distance [m]         {zero_curvature.end_distance[-1]:.9g}")
     print(f"  nominal arc length [m]         {0.2:.9g}")
     print(f"  last-second relative change    {zero_curvature.steady_relative_change:.6%}")
+
+    initial_nodes, _, _ = _initial_geometry(50, 0.2, 0.02)
+    final_nodes = node_positions(zero_curvature.q)
+    figure11, axes11 = plt.subplots(
+        1, 2, figsize=(10.0, 4.0), constrained_layout=True
+    )
+    axes11[0].plot(
+        initial_nodes[:, 0],
+        initial_nodes[:, 1],
+        "o-",
+        markersize=2.5,
+        label="Initial curved shape",
+    )
+    axes11[0].plot(
+        final_nodes[:, 0],
+        final_nodes[:, 1],
+        "o-",
+        markersize=2.5,
+        label="Final shape",
+    )
+    axes11[0].set_xlabel("x [m]")
+    axes11[0].set_ylabel("y [m]")
+    axes11[0].set_title("Q11: shape change")
+    axes11[0].axis("equal")
+    axes11[0].legend(frameon=False)
+
+    axes11[1].plot(zero_curvature.time, zero_curvature.end_distance)
+    axes11[1].axhline(
+        np.sum(zero_curvature.reference_lengths),
+        color="#C54E3D",
+        linestyle="--",
+        label="Discrete rod length",
+    )
+    axes11[1].set_xlabel("Time [s]")
+    axes11[1].set_ylabel("End-to-end distance [m]")
+    axes11[1].set_title("Q11: approach to steady state")
+    axes11[1].legend(frameon=False)
+
+    # Display all temporary figures together after every simulation finishes.
+    # Nothing is written to disk.
+    plt.show()
 
 
 if __name__ == "__main__":
