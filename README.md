@@ -11,6 +11,10 @@ Structures and Soft Robots*.
   in viscous fluid and a point-loaded simply supported beam.
 - [`homework_3/`](homework_3/): three-dimensional Discrete Elastic Rod simulator
   for straight and naturally curved clamped-free rods.
+- [`homework_4/`](homework_4/): triangle-mesh edges and hinges, shell bending
+  energy, and a finite-difference gradient check.
+- [`final_project/`](final_project/): soft bowstring and rigid-arrow model that
+  predicts release speed, energy transfer, trajectory, and required aim angle.
 
 Each assignment directory contains its own source code, run instructions, and
 optional validation utilities. Course handouts and lecture files are not
