@@ -1,5 +1,3 @@
-"""Numerical data for MAE 263F Homework 4, Questions 1--8."""
-
 from pathlib import Path
 import sys
 
@@ -10,15 +8,14 @@ COURSE_REPOSITORY = Path(__file__).resolve().parents[2] / "mae-263F"
 sys.path.insert(0, str(COURSE_REPOSITORY / "appendix"))
 sys.path.insert(0, str(COURSE_REPOSITORY / "src" / "shells"))
 
-from gradEb_hessEb_Shell import (  # noqa: E402
+from gradEb_hessEb_Shell import ( 
     getTheta,
     gradEb_hessEb_Shell,
 )
-from shell_functions import getEdgesAndHinges  # noqa: E402
+from shell_functions import getEdgesAndHinges 
 
 
 def plate_elements() -> np.ndarray:
-    """Return the eight triangles of the 3-by-3-node plate in Figure 1."""
     elements = []
     for j in range(2):
         for i in range(2):
