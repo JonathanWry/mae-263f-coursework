@@ -419,7 +419,7 @@ def run_archery(
     )
 
 
-def plot_archery_results(result: ArcheryResult) -> None:
+def plot_archery_results(result: ArcheryResult) -> plt.Figure:
     figure, axes = plt.subplots(2, 2, figsize=(13, 9))
     release_index = int(np.searchsorted(result.time, result.release_time))
     snapshot_indices = [0, max(1, release_index // 2), release_index, -1]
@@ -449,6 +449,13 @@ def plot_archery_results(result: ArcheryResult) -> None:
     force_axis.set_ylabel("string force [N]")
     axes[0, 1].axvline(result.release_time * 1e3, color="black", linestyle="--")
     axes[0, 1].set_title("Rigid-arrow acceleration")
+    speed_lines, speed_labels = axes[0, 1].get_legend_handles_labels()
+    force_lines, force_labels = force_axis.get_legend_handles_labels()
+    axes[0, 1].legend(
+        speed_lines + force_lines,
+        speed_labels + force_labels,
+        loc="center right",
+    )
 
     axes[1, 0].plot(result.time * 1e3, result.string_energy, label="string elastic")
     axes[1, 0].plot(
@@ -480,6 +487,7 @@ def plot_archery_results(result: ArcheryResult) -> None:
     )
     axes[1, 1].legend()
     figure.tight_layout()
+    return figure
 
 
 def animate_launch(result: ArcheryResult) -> FuncAnimation:

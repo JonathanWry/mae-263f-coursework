@@ -1,93 +1,76 @@
-# Soft bowstring and rigid-arrow prediction
+# Bow-string-arrow simulation
 
-`archery_prediction.py` is the main final project. It predicts the launch and
-flight of a rigid arrow driven by a deformable bowstring.
+The main model is `distributed_bow_archery.py`.
 
-## Model
+- The rigid riser is fixed.
+- Each bow limb is a multi-segment planar DER with distributed mass,
+  stretching, bending, and a prescribed unstrung shape.
+- The massive string is a tension-only planar chain attached to the two moving
+  limb tips. A very small bending term regularizes its slack shape but is not
+  used as physical bowstring stiffness.
+- The arrow is a rigid translating mass.
+- One-sided penalty contact transfers force from the string to the arrow and
+  allows separation without prescribing a release position.
+- Backward Euler and Newton iteration advance the coupled dynamics.
 
-| Component | Representation |
-|---|---|
-| Bow | Rigid support with two fixed string endpoints |
-| Bowstring | Discrete soft body with stretching energy |
-| Arrow | Rigid translating body; its mass is coupled to the center nock before release |
-| Release | Arrow detaches when the string reaches the brace plane |
-| Flight | Gravity and quadratic aerodynamic drag |
+The earlier `coupled_archery.py` single-hinge limb model is retained only as a
+baseline. Its entire limb can rotate through the brace plane, so its
+post-release shape should not be interpreted as a physical bow shape.
 
-The string uses the stretching gradient and Hessian from
-`homework_2/elastic_derivatives.py`. Each launch step is solved with backward Euler
-and Newton iteration, following the numerical structure used in the course
-homework. A string has negligible bending stiffness, so this model intentionally
-uses stretching energy rather than DER rod bending or twist energy.
-
-The effective axial stiffness `EA` is calibrated from the specified full-draw
-force. For half-span `h`, draw distance `d`, and half-string length
-`l = sqrt(h^2 + d^2)`,
-
-```text
-strain = (l - h) / h
-F_draw = 2 EA strain d / l.
-```
-
-Before release, the rigid arrow mass is added only to the nock's axial degree of
-freedom. When the nock reaches `x = 0`, the arrow separates with the nock velocity.
-That predicted velocity becomes the initial condition of a rigid-body flight model.
-The program then solves for the low aim angle that reaches the requested target
-height and distance.
-
-The default model uses 21 string nodes, a `0.70 m` draw, a `200 N` full-draw force,
-a `25 g` arrow, and a 70 m target. These are effective demonstration parameters and
-can be changed from the command line.
-
-## Default prediction
-
-The current default result is approximately:
-
-- initial string energy: `42.40 J`;
-- release time: `17.2 ms`;
-- release speed: `55.35 m/s`;
-- energy-only upper limit: `58.24 m/s`;
-- launch energy efficiency: about `90%`;
-- required aim angle for a 70 m equal-height target: `6.70 deg`;
-- time to target: `1.305 s`.
+The default case is a straight-end approximation calibrated against the
+Greenhorn Comet TD 350 measurements reported by Tuijn and Kooi (1992). A full
+working-recurve model is intentionally excluded because it would also require
+frictionless string--limb contact and a moving string detachment point.
 
 ## Run
 
-From the coursework repository root:
-
 ```bash
-python3 final_project/archery_prediction.py --animate
+python3 final_project/distributed_bow_archery.py
 ```
 
-The temporary figures show the string shape, arrow acceleration and nock force,
-energy transfer, and predicted arrow trajectory. No figures are saved.
-
-Useful parameters:
+Animation:
 
 ```bash
-python3 final_project/archery_prediction.py \
-  --nodes 41 \
-  --draw-force 220 \
-  --draw-length 0.72 \
-  --target-distance 70 \
-  --animate
+python3 final_project/distributed_bow_archery.py --animate
 ```
 
-Run the checks with:
+Save an MP4 instead of opening a window:
 
 ```bash
-python3 final_project/validate_archery.py
+python3 final_project/distributed_bow_archery.py --no-show \
+  --save-animation final_project/distributed_bow_launch.mp4
 ```
 
-The validation checks the calibrated draw force, energy bound, 11/21/41-node mesh
-convergence, and target-height prediction.
+Verification:
 
-## Scope and limitations
+```bash
+python3 final_project/validate_distributed_bow.py
+```
 
-The soft string is an effective representation of the energy-storing bow-string
-system. A real bow stores most of its energy in bending limbs, and a real arrow can
-flex, rotate, and experience lift. Those effects are deliberately excluded here so
-the project remains within the course scope: a soft elastic structure coupled to a
-rigid body, followed by a simple aerodynamic prediction.
+The verification checks the assembled derivatives, zero energy of the natural
+limb shape, the tension-only cable law, convergence to Euler--Bernoulli
+cantilever theory, force--draw work versus state energy, static residuals,
+unilateral contact and release, fixed root clamps, distributed limb rotation,
+published bow data, and the configured draw-force and strain constraints. Run
+the slower mesh/time-step, contact-stiffness, and string-regularization
+sensitivity checks with:
 
-The earlier soft-ball files remain in this directory as development prototypes,
-but they are not the main final-project model.
+```bash
+python3 final_project/validate_distributed_bow.py --extended
+```
+
+Default result (10 limb segments and 21 string nodes): 0.207 m brace height,
+130.4 N full-draw force, 30.8 J available draw energy, 49.27 m/s release speed,
+and 71.35% efficiency. The corresponding published values are 0.214--0.220 m,
+126.9 N, 32.16 J, 49.73 m/s, and 70.2%. The simulated limb tips remain behind
+the riser after release.
+
+## Model sources
+
+- B. W. Kooi, "On the mechanics of the bow and arrow," *Journal of
+  Engineering Mathematics*, 1981, https://doi.org/10.1007/BF00052515.
+- C. Tuijn and B. W. Kooi, "The measurement of arrow velocities in the
+  students' laboratory," *European Journal of Physics*, 1992,
+  https://www.bio.vu.nl/thb/users/kooi/tuko92.pdf.
+- M. Tiermas, "The limb deformation of the compound bow," *Meccanica*, 2017,
+  https://doi.org/10.1007/s11012-016-0485-0.

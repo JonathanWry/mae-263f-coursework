@@ -10,3 +10,11 @@ __pycache__/
 figures/
 homework_*/figures/
 
+# Keep the report figures reproducible, but ignore LaTeX intermediates.
+!midterm_report/figures/
+!midterm_report/figures/*.pdf
+midterm_report/figures/*.png
+midterm_report/*.aux
+midterm_report/*.log
+midterm_report/*.xdv
+

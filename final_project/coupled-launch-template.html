@@ -1,0 +1,278 @@
+<div id="coupled-bow-launch">
+  <style>
+    #coupled-bow-launch {
+      display: grid;
+      gap: calc(var(--font-size-base) * 0.75);
+      color: var(--foreground);
+    }
+    #coupled-bow-launch .launch-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: calc(var(--font-size-base) * 0.75);
+      padding-inline-end: 96px;
+    }
+    #coupled-bow-launch .launch-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: calc(var(--font-size-base) * 0.75);
+      color: var(--muted-foreground);
+    }
+    #coupled-bow-launch .launch-status strong {
+      color: var(--foreground);
+      font-weight: 500;
+    }
+    #coupled-bow-launch .launch-stage {
+      width: 100%;
+      min-height: 280px;
+      color: var(--foreground);
+    }
+    #coupled-bow-launch .launch-limb {
+      stroke: var(--viz-series-3);
+      stroke-width: 5;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    #coupled-bow-launch .launch-string {
+      fill: none;
+      stroke: var(--viz-series-1);
+      stroke-width: 2;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+    #coupled-bow-launch .launch-node {
+      fill: var(--viz-series-1);
+    }
+    #coupled-bow-launch .launch-arrow {
+      stroke: var(--viz-series-2);
+      stroke-width: 4;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    #coupled-bow-launch .launch-arrow-head {
+      fill: var(--viz-series-2);
+    }
+    #coupled-bow-launch .launch-hinge {
+      fill: var(--foreground);
+    }
+    #coupled-bow-launch .launch-riser {
+      stroke: var(--foreground);
+      stroke-width: 7;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    #coupled-bow-launch .launch-reference {
+      stroke: var(--border);
+      stroke-width: 1.5;
+      stroke-dasharray: 6 6;
+      vector-effect: non-scaling-stroke;
+    }
+    #coupled-bow-launch .launch-ground {
+      stroke: var(--border);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+    #coupled-bow-launch .launch-label {
+      fill: var(--muted-foreground);
+      font-size: 12px;
+    }
+    #coupled-bow-launch .launch-phase {
+      fill: var(--foreground);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    #coupled-bow-launch .launch-release-mark {
+      stroke: var(--viz-series-4);
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+    }
+    #coupled-bow-launch .launch-slider-label {
+      min-width: 9.5rem;
+    }
+    @media (max-width: 520px) {
+      #coupled-bow-launch .launch-header {
+        padding-inline-end: 0;
+      }
+      #coupled-bow-launch .launch-status {
+        gap: calc(var(--font-size-base) * 0.5);
+      }
+    }
+  </style>
+
+  <div class="launch-header">
+    <h1>Coupled bow launch</h1>
+    <div class="launch-status tabular-nums" aria-live="polite">
+      <span>Time <strong id="launch-time">0.00 ms</strong></span>
+      <span>Arrow <strong id="launch-speed">0.00 m/s</strong></span>
+      <span>Contact <strong id="launch-force">0.00 N</strong></span>
+    </div>
+  </div>
+
+  <svg class="launch-stage" viewBox="0 0 960 420" role="img" aria-labelledby="launch-title launch-desc">
+    <title id="launch-title">Simulated bow, string, and arrow launch process</title>
+    <desc id="launch-desc">Two hinged limbs drive a planar discrete elastic rod string and a rigid arrow through unilateral penalty contact, followed by separation and inertial bow motion.</desc>
+    <line class="launch-ground" x1="24" y1="210" x2="936" y2="210"></line>
+    <line id="brace-plane" class="launch-reference" x1="0" y1="40" x2="0" y2="380"></line>
+    <text id="brace-label" class="launch-label" x="0" y="398">brace plane</text>
+    <line id="release-plane" class="launch-release-mark" x1="0" y1="175" x2="0" y2="245"></line>
+    <text id="release-label" class="launch-label" x="0" y="264">release</text>
+
+    <g transform="translate(270 210) scale(360 -360)">
+      <line class="launch-riser" x1="0" y1="-0.1" x2="0" y2="0.1"></line>
+      <line id="lower-limb" class="launch-limb"></line>
+      <line id="upper-limb" class="launch-limb"></line>
+      <polyline id="launch-string" class="launch-string"></polyline>
+      <g id="launch-nodes"></g>
+      <line id="launch-arrow" class="launch-arrow"></line>
+      <circle class="launch-hinge" cx="0" cy="-0.1" r="0.018"></circle>
+      <circle class="launch-hinge" cx="0" cy="0.1" r="0.018"></circle>
+    </g>
+    <path id="launch-arrow-head" class="launch-arrow-head"></path>
+    <text id="launch-phase" class="launch-phase" x="24" y="30">Attached power stroke</text>
+  </svg>
+
+  <div class="viz-controls">
+    <button id="launch-play" class="btn btn-primary" type="button" aria-pressed="false">Play</button>
+    <label class="form-label launch-slider-label" for="launch-slider">
+      Simulation time <span id="launch-slider-value" class="tabular-nums">0.00 ms</span>
+    </label>
+    <input id="launch-slider" class="form-range" type="range" min="0" max="100" value="0" step="1" aria-label="Simulation time">
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById("coupled-bow-launch");
+      const simulation = __SIMULATION_DATA__;
+      const frameCount = simulation.frames.length;
+      const releaseIndex = simulation.frames.findIndex((frame) => frame.t >= simulation.releaseTime);
+      const elements = {
+        time: root.querySelector("#launch-time"),
+        speed: root.querySelector("#launch-speed"),
+        force: root.querySelector("#launch-force"),
+        phase: root.querySelector("#launch-phase"),
+        sliderValue: root.querySelector("#launch-slider-value"),
+        slider: root.querySelector("#launch-slider"),
+        play: root.querySelector("#launch-play"),
+        string: root.querySelector("#launch-string"),
+        nodes: root.querySelector("#launch-nodes"),
+        upperLimb: root.querySelector("#upper-limb"),
+        lowerLimb: root.querySelector("#lower-limb"),
+        arrow: root.querySelector("#launch-arrow"),
+        arrowHead: root.querySelector("#launch-arrow-head"),
+        bracePlane: root.querySelector("#brace-plane"),
+        braceLabel: root.querySelector("#brace-label"),
+        releasePlane: root.querySelector("#release-plane"),
+        releaseLabel: root.querySelector("#release-label")
+      };
+      const screenX = (x) => 270 + 360 * x;
+      const screenY = (y) => 210 - 360 * y;
+      let frameIndex = 0;
+      let playing = false;
+      let timer = null;
+
+      elements.slider.max = String(frameCount - 1);
+      const braceScreenX = screenX(simulation.braceX);
+      elements.bracePlane.setAttribute("x1", braceScreenX);
+      elements.bracePlane.setAttribute("x2", braceScreenX);
+      elements.braceLabel.setAttribute("x", braceScreenX + 6);
+      const releaseScreenX = screenX(simulation.releasePosition);
+      elements.releasePlane.setAttribute("x1", releaseScreenX);
+      elements.releasePlane.setAttribute("x2", releaseScreenX);
+      elements.releaseLabel.setAttribute("x", releaseScreenX + 6);
+
+      simulation.frames[0].nodes.forEach(() => {
+        const node = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        node.setAttribute("class", "launch-node");
+        node.setAttribute("r", "0.011");
+        elements.nodes.appendChild(node);
+      });
+
+      const setLine = (line, x1, y1, x2, y2) => {
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+      };
+
+      const render = (index, saveState = false) => {
+        frameIndex = Math.max(0, Math.min(frameCount - 1, index));
+        const frame = simulation.frames[frameIndex];
+        const lowerTip = frame.nodes[0];
+        const upperTip = frame.nodes[frame.nodes.length - 1];
+        setLine(elements.lowerLimb, 0, -0.1, lowerTip[0], lowerTip[1]);
+        setLine(elements.upperLimb, 0, 0.1, upperTip[0], upperTip[1]);
+        elements.string.setAttribute("points", frame.nodes.map((node) => `${node[0]},${node[1]}`).join(" "));
+        [...elements.nodes.children].forEach((node, nodeIndex) => {
+          node.setAttribute("cx", frame.nodes[nodeIndex][0]);
+          node.setAttribute("cy", frame.nodes[nodeIndex][1]);
+        });
+
+        const arrowTip = frame.arrowX + simulation.arrowLength;
+        setLine(elements.arrow, frame.arrowX, 0, arrowTip, 0);
+        const tipX = screenX(arrowTip);
+        const tipY = screenY(0);
+        elements.arrowHead.setAttribute("d", `M ${tipX} ${tipY} L ${tipX - 12} ${tipY - 7} L ${tipX - 12} ${tipY + 7} Z`);
+
+        const contactActive = frame.force > 0.001;
+        const attached = frame.t < simulation.releaseTime;
+        elements.phase.textContent = contactActive
+          ? "String–arrow contact active"
+          : attached
+            ? "Temporary separation before recontact"
+            : "Final separation — bow and string inertia continue";
+        elements.time.textContent = `${(1000 * frame.t).toFixed(2)} ms`;
+        elements.speed.textContent = `${frame.speed.toFixed(2)} m/s`;
+        elements.force.textContent = `${frame.force.toFixed(2)} N`;
+        elements.sliderValue.textContent = `${(1000 * frame.t).toFixed(2)} ms`;
+        elements.slider.value = String(frameIndex);
+        elements.releasePlane.style.opacity = frameIndex >= releaseIndex ? "1" : "0.25";
+        elements.releaseLabel.style.opacity = frameIndex >= releaseIndex ? "1" : "0.25";
+
+        if (saveState && window.openai?.setWidgetState) {
+          window.openai.setWidgetState({
+            modelContent: { timeMs: Number((1000 * frame.t).toFixed(2)), phase: attached ? "attached" : "released" },
+            privateContent: { frameIndex }
+          }).catch(() => {});
+        }
+      };
+
+      const stop = () => {
+        playing = false;
+        elements.play.textContent = "Play";
+        elements.play.setAttribute("aria-pressed", "false");
+        if (timer !== null) window.clearInterval(timer);
+        timer = null;
+      };
+
+      const start = () => {
+        playing = true;
+        elements.play.textContent = "Pause";
+        elements.play.setAttribute("aria-pressed", "true");
+        timer = window.setInterval(() => {
+          render((frameIndex + 1) % frameCount);
+        }, 45);
+      };
+
+      elements.play.addEventListener("click", () => {
+        if (playing) stop(); else start();
+      });
+      elements.slider.addEventListener("input", (event) => {
+        stop();
+        render(Number(event.target.value));
+      });
+      elements.slider.addEventListener("change", () => render(frameIndex, true));
+      window.addEventListener("openai:set_globals", (event) => {
+        const savedIndex = event.detail?.globals?.widgetState?.privateContent?.frameIndex;
+        if (Number.isInteger(savedIndex)) {
+          stop();
+          render(savedIndex);
+        }
+      });
+
+      const savedIndex = window.openai?.widgetState?.privateContent?.frameIndex;
+      render(Number.isInteger(savedIndex) ? savedIndex : 0);
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) start();
+    })();
+  </script>
+</div>
